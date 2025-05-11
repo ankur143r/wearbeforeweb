@@ -13,13 +13,22 @@ export default function PurchasePage() {
   const [inTelegram, setInTelegram] = useState(false)
   const [isChecking, setIsChecking] = useState(true)
   const searchParams = useSearchParams()
+  
+  // Get parameters from URL
   const defaultTgId = searchParams.get("tg_id") || ""
+  const urlUserId = searchParams.get("user_id") || ""
+  const urlUsername = searchParams.get("username") || ""
+  const urlFirstName = searchParams.get("first_name") || ""
+  const urlLastName = searchParams.get("last_name") || ""
+
+  // Determine telegram ID/username to use (user_id takes precedence)
+  const defaultTelegramValue = urlUserId || urlUsername || defaultTgId
 
   // User info form state
-  const [firstName, setFirstName] = useState("")
-  const [lastName, setLastName] = useState("")
+  const [firstName, setFirstName] = useState(urlFirstName)
+  const [lastName, setLastName] = useState(urlLastName)
   const [email, setEmail] = useState("")
-  const [telegramId, setTelegramId] = useState(defaultTgId)
+  const [telegramId, setTelegramId] = useState(defaultTelegramValue)
 
   // Package selection state
   const [selectedImages, setSelectedImages] = useState(5)
