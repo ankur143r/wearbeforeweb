@@ -7,7 +7,6 @@ import Script from "next/script"
 import { CookieConsent } from "@/app/components/cookie-consent"
 import { AnalyticsScripts } from "@/app/components/analytics-scripts"
 import { Suspense } from "react"
-import { TelegramBrowserCheck } from "@/app/components/telegram-browser-check"
 
 const inter = Inter({ subsets: ["latin"] })
 
@@ -78,7 +77,7 @@ export default function RootLayout({
         <link rel="apple-touch-icon" href="/apple-icon.png" />
         <meta name="apple-mobile-web-app-capable" content="no" />
 
-        {/* Early Telegram Detection Script */}
+        {/* Early Telegram Detection Script - Debug alerts removed */}
         <script
           dangerouslySetInnerHTML={{
             __html: `
@@ -101,18 +100,15 @@ export default function RootLayout({
                   window.Telegram ||
                   !!window.TelegramWebAppInitData ||
                   (isIOS && isWebView);
-
-                alert('EarlyScript Debug:\
-' +
-                      'userAgent: ' + navigator.userAgent + '\
-' +
-                      'isTelegram: ' + isTelegram + '\
-' +
-                      'isIOS: ' + isIOS + '\
-' +
-                      'isAndroid: ' + isAndroid + '\
-' +
-                      'isWebView: ' + isWebView);
+                
+                // Debug alert removed
+                console.log('Telegram detection:', {
+                  userAgent: navigator.userAgent,
+                  isTelegram,
+                  isIOS,
+                  isAndroid,
+                  isWebView
+                });
               }
               catch (e) {
                 console.error('Telegram detection error:', e);
@@ -124,13 +120,12 @@ export default function RootLayout({
       </head>
       <body className={inter.className}>
         <ThemeProvider attribute="class" defaultTheme="light" enableSystem disableTransitionOnChange>
-          <TelegramBrowserCheck>
-            <Suspense>
-              {children}
-              <CookieConsent />
-              <AnalyticsScripts />
-            </Suspense>
-          </TelegramBrowserCheck>
+          {/* Removed TelegramBrowserCheck wrapper to disable fallback message */}
+          <Suspense>
+            {children}
+            <CookieConsent />
+            <AnalyticsScripts />
+          </Suspense>
         </ThemeProvider>
 
         {/* Structured Data for Organization */}
