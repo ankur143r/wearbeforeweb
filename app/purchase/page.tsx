@@ -20,6 +20,7 @@ export default function PurchasePage() {
   const urlUsername = searchParams.get("username") || ""
   const urlFirstName = searchParams.get("first_name") || ""
   const urlLastName = searchParams.get("last_name") || ""
+  const paymentStatus = searchParams.get("payment") || null // Add payment status from query parameter
 
   // Determine telegram ID/username to use (user_id takes precedence)
   const defaultTelegramValue = urlUserId || urlUsername || defaultTgId
@@ -106,6 +107,17 @@ export default function PurchasePage() {
     script.onload = () => setRazorpayLoaded(true)
     document.body.appendChild(script)
   }, [])
+
+  // Reset form state on cancellation or failure
+  useEffect(() => {
+    if (paymentStatus === 'cancelled' || paymentStatus === 'failed') {
+      setEmail(""); // Reset email
+      setSelectedImages(5); // Reset to default package
+      setCustomSelected(false); // Reset custom selection
+      setCustomAmount(1); // Reset custom amount
+      setFormComplete(false); // Return to user info step
+    }
+  }, [paymentStatus])
 
   if (isChecking) {
     return <div>Loading...</div>
@@ -195,9 +207,22 @@ export default function PurchasePage() {
         return
       }
 
-      const rzp = new window.Razorpay(paymentOptions)
+      // Add redirect URLs to Razorpay options
+      const updatedOptions = {
+        ...paymentOptions,
+        redirect: true,
+        success_url: 'https://t.me/myfashiobot',
+        cancel_url: 'https://www.wearbefore.com/purchase?payment=cancelled',
+        handler: (response: any) => {
+          console.log('Payment successful:', response);
+        },
+      };
+
+      const rzp = new window.Razorpay(updatedOptions)
       rzp.on("payment.failed", (res: any) => {
         setError("Payment failed: " + (res.error?.description || "Unknown error"))
+        // Redirect to the purchase page with payment=failed
+        window.location.href = 'https://www.wearbefore.com/purchase?payment=failed';
         setIsLoading(false)
       })
       rzp.open()
@@ -216,6 +241,29 @@ export default function PurchasePage() {
         <main className="max-w-4xl mx-auto p-6">
           <Card className="p-6 mb-6">
             <h1 className="text-2xl font-bold mb-4">Purchase Image Credits</h1>
+            
+            {/* Display payment status message if applicable */}
+            {paymentStatus === 'cancelled' && (
+              <div className="mb-6 p-3 bg-red-50 text-red-700 rounded-md flex items-center" role="alert">
+                <AlertCircle className="h-5 w-5 mr-2" aria-hidden="true" />
+                Payment was cancelled. Please try again or{' '}
+                <a href="mailto:support@wearbefore.com" className="text-blue-600 hover:underline">
+                  contact support
+                </a>{' '}
+                if you need assistance.
+              </div>
+            )}
+            {paymentStatus === 'failed' && (
+              <div className="mb-6 p-3 bg-red-50 text-red-700 rounded-md flex items-center" role="alert">
+                <AlertCircle className="h-5 w-5 mr-2" aria-hidden="true" />
+                Payment failed. Please try again or{' '}
+                <a href="mailto:support@wearbefore.com" className="text-blue-600 hover:underline">
+                  contact support
+                </a>{' '}
+                if you need assistance.
+              </div>
+            )}
+
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
                 <label htmlFor="firstName" className="block text-sm font-medium mb-1">
@@ -275,7 +323,13 @@ export default function PurchasePage() {
                   placeholder="e.g., @username or 123456789"
                   aria-required="true"
                 />
-                <p className="text-sm text-gray-500 mt-1">To find your user ID, check out @userinfobot on Telegram.</p>
+                <p className="text-sm text-gray-500 mt-1">
+                  To find your user ID, check out{' '}
+                  <Link href="https://t.me/userinfobot" className="text-blue-600 hover:underline">
+                    @userinfobot
+                  </Link>{' '}
+                  on Telegram.
+                </p>
               </div>
             </div>
             <div className="mt-6">
