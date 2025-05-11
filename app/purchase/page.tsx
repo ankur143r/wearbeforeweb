@@ -82,6 +82,7 @@ export default function PurchasePage() {
     setError("")
     try {
       if (!razorpayLoaded || !window.Razorpay) {
+        // Only show error for Razorpay not loading, not for payment failures
         setError("Payment gateway is not ready. Please try again.")
         setIsLoading(false)
         return
@@ -97,6 +98,7 @@ export default function PurchasePage() {
       })
 
       if (!paymentOptions.success) {
+        // Only show error for initialization failures, not for payment failures
         setError(paymentOptions.error || "Failed to initialize payment")
         setIsLoading(false)
         return
@@ -105,25 +107,25 @@ export default function PurchasePage() {
       const rzp = new window.Razorpay({
         ...paymentOptions,
         // Add handler for payment success
-        handler: (response: any) => {
+        handler: (response) => {
           console.log("Payment successful:", response)
           // Redirect to Telegram bot
           window.location.href = "https://t.me/myfashiobot"
         },
       })
 
-      // Handle payment failure
-      rzp.on("payment.failed", (res: any) => {
-        console.error("Payment failed:", res)
-        setError("Your payment is unsuccessful. Please try again. For any support, contact: support@wearbefore.com")
+      // Handle payment failure - just log to console, don't show error message
+      rzp.on("payment.failed", () => {
+        // Simply log that payment failed without accessing error details
+        console.log("Payment failed or was cancelled")
         setIsLoading(false)
       })
 
       rzp.open()
     } catch (err) {
       console.error("Payment error:", err)
-      setError("Your payment is unsuccessful. Please try again. For any support, contact: support@wearbefore.com")
-    } finally {
+      // Only show error for unexpected errors, not for payment failures
+      setError("An unexpected error occurred. Please try again.")
       setIsLoading(false)
     }
   }

@@ -144,28 +144,27 @@ export function CreditModal({ isOpen, onClose, telegramId, firstName, lastName, 
       const razorpayInstance = new window.Razorpay({
         ...paymentOptions,
         // Add handler for payment success
-        handler: (response: any) => {
+        handler: (response) => {
           console.log("Payment successful:", response)
           // Redirect to Telegram bot
           window.location.href = "https://t.me/myfashiobot"
         },
       })
 
-      // Handle payment failure
-      razorpayInstance.on("payment.failed", (response: any) => {
-        console.error("Payment failed:", response)
-        setPaymentStatus({
-          success: false,
-          message: "Your payment is unsuccessful. Please try again. For any support, contact: support@wearbefore.com",
-        })
+      // Handle payment failure - just log to console, don't show error message
+      razorpayInstance.on("payment.failed", () => {
+        // Simply log that payment failed without accessing error details
+        console.log("Payment failed or was cancelled")
+        setIsProcessing(false)
       })
 
       razorpayInstance.open()
     } catch (error) {
       console.error("Payment error:", error)
+      // Only show error for unexpected errors, not for payment failures
       setPaymentStatus({
         success: false,
-        message: "Your payment is unsuccessful. Please try again. For any support, contact: support@wearbefore.com",
+        message: "An unexpected error occurred. Please try again.",
       })
     } finally {
       setIsProcessing(false)
@@ -240,7 +239,7 @@ export function CreditModal({ isOpen, onClose, telegramId, firstName, lastName, 
                 <p className="text-gray-500">One-time payment</p>
               </div>
 
-              {paymentStatus && (
+              {paymentStatus && paymentStatus.message && (
                 <div
                   className={`mb-4 p-3 rounded-md text-center ${
                     paymentStatus.success ? "bg-green-50 text-green-700" : "bg-red-50 text-red-700"
