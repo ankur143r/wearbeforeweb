@@ -141,12 +141,22 @@ export function CreditModal({ isOpen, onClose, telegramId, firstName, lastName, 
       }
 
       // Create Razorpay instance with options from server
-      const razorpayInstance = new window.Razorpay(paymentOptions)
+      const razorpayInstance = new window.Razorpay({
+        ...paymentOptions,
+        // Add handler for payment success
+        handler: (response: any) => {
+          console.log("Payment successful:", response)
+          // Redirect to Telegram bot
+          window.location.href = "https://t.me/myfashiobot"
+        },
+      })
 
+      // Handle payment failure
       razorpayInstance.on("payment.failed", (response: any) => {
+        console.error("Payment failed:", response)
         setPaymentStatus({
           success: false,
-          message: "Payment failed: " + (response.error?.description || "Unknown error"),
+          message: "Your payment is unsuccessful. Please try again. For any support, contact: support@wearbefore.com",
         })
       })
 
@@ -155,7 +165,7 @@ export function CreditModal({ isOpen, onClose, telegramId, firstName, lastName, 
       console.error("Payment error:", error)
       setPaymentStatus({
         success: false,
-        message: "An error occurred while processing your payment",
+        message: "Your payment is unsuccessful. Please try again. For any support, contact: support@wearbefore.com",
       })
     } finally {
       setIsProcessing(false)

@@ -1,14 +1,15 @@
-import React, { Suspense } from "react";
-import type { Metadata } from "next";
-import { Inter } from "next/font/google";
-import "./globals.css";
-import { ThemeProvider } from "@/components/theme-provider";
-import Script from "next/script";
-import { CookieConsent } from "@/app/components/cookie-consent";
-import { AnalyticsScripts } from "@/app/components/analytics-scripts";
-import { TelegramBrowserCheck } from "@/app/components/telegram-browser-check";
+import type React from "react"
+import type { Metadata } from "next"
+import { Inter } from "next/font/google"
+import "./globals.css"
+import { ThemeProvider } from "@/components/theme-provider"
+import Script from "next/script"
+import { CookieConsent } from "@/app/components/cookie-consent"
+import { AnalyticsScripts } from "@/app/components/analytics-scripts"
+import { Suspense } from "react"
+import { TelegramBrowserCheck } from "@/app/components/telegram-browser-check"
 
-const inter = Inter({ subsets: ["latin"] });
+const inter = Inter({ subsets: ["latin"] })
 
 export const metadata: Metadata = {
   title: "WearBefore – Virtual Try-On in Telegram | Try Before You Buy",
@@ -62,12 +63,12 @@ export const metadata: Metadata = {
   },
   category: "Technology",
     generator: 'v0.dev'
-};
+}
 
 export default function RootLayout({
   children,
 }: {
-  children: React.ReactNode;
+  children: React.ReactNode
 }) {
   return (
     <html lang="en" suppressHydrationWarning>
@@ -76,16 +77,55 @@ export default function RootLayout({
         <link rel="icon" href="/favicon.ico" sizes="any" />
         <link rel="apple-touch-icon" href="/apple-icon.png" />
         <meta name="apple-mobile-web-app-capable" content="no" />
+
+        {/* Early Telegram Detection Script */}
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `
+            (function() {
+              try {
+                const isIOS = /iPhone|iPad|iPod/i.test(navigator.userAgent);
+                const isAndroid = /Android/i.test(navigator.userAgent);
+                const isWebView = 
+                  (navigator.userAgent.includes('Mobile') && 
+                   (window.navigator.standalone === undefined || 
+                    window.innerWidth < 768 || 
+                    (document.referrer === '' && window.ontouchstart !== undefined) || 
+                    window.matchMedia('(display-mode: standalone)').matches === false));
+                const isTelegram =
+                  /Telegram/i.test(navigator.userAgent) ||
+                  /TelegramWebView/i.test(navigator.userAgent) ||
+                  /TDesktop/i.test(navigator.userAgent) ||
+                  window.Telegram?.WebApp ||
+                  window.TelegramWebview ||
+                  window.Telegram ||
+                  !!window.TelegramWebAppInitData ||
+                  (isIOS && isWebView);
+
+                alert('EarlyScript Debug:\
+' +
+                      'userAgent: ' + navigator.userAgent + '\
+' +
+                      'isTelegram: ' + isTelegram + '\
+' +
+                      'isIOS: ' + isIOS + '\
+' +
+                      'isAndroid: ' + isAndroid + '\
+' +
+                      'isWebView: ' + isWebView);
+              }
+              catch (e) {
+                console.error('Telegram detection error:', e);
+              }
+            })();
+          `,
+          }}
+        />
       </head>
       <body className={inter.className}>
-        <ThemeProvider
-          attribute="class"
-          defaultTheme="light"
-          enableSystem
-          disableTransitionOnChange
-        >
+        <ThemeProvider attribute="class" defaultTheme="light" enableSystem disableTransitionOnChange>
           <TelegramBrowserCheck>
-            <Suspense fallback={null}>
+            <Suspense>
               {children}
               <CookieConsent />
               <AnalyticsScripts />
@@ -104,10 +144,7 @@ export default function RootLayout({
               name: "WearBefore",
               url: "https://wearbefore.com",
               logo: "https://wearbefore.com/logo.png",
-              sameAs: [
-                "https://facebook.com/wearbefore",
-                "https://instagram.com/wearbefore",
-              ],
+              sameAs: ["https://facebook.com/wearbefore", "https://instagram.com/wearbefore"],
               contactPoint: {
                 "@type": "ContactPoint",
                 email: "support@wearbefore.com",
@@ -133,12 +170,11 @@ export default function RootLayout({
                 price: "0",
                 priceCurrency: "INR",
               },
-              description:
-                "AI-powered virtual try-on service that lets you see yourself in any outfit before buying.",
+              description: "AI-powered virtual try-on service that lets you see yourself in any outfit before buying.",
             }),
           }}
         />
       </body>
     </html>
-  );
+  )
 }

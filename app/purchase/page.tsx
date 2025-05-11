@@ -4,16 +4,20 @@ import { useEffect, useState } from "react"
 import { useSearchParams } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
-import { AlertCircle, Loader2, Plus, Minus, ArrowRight, ExternalLink } from "lucide-react"
+import { AlertCircle, Loader2, Plus, Minus, ArrowRight } from "lucide-react"
 import { initializePayment } from "@/app/actions/payment-actions"
 import Link from "next/link"
 import { PurchaseSEO } from "./seo"
 
+declare global {
+  interface Window {
+    Razorpay: any
+  }
+}
+
 export default function PurchasePage() {
-  const [inTelegram, setInTelegram] = useState(false)
-  const [isChecking, setIsChecking] = useState(true)
   const searchParams = useSearchParams()
-  
+
   // Get parameters from URL
   const defaultTgId = searchParams.get("tg_id") || ""
   const urlUserId = searchParams.get("user_id") || ""
@@ -44,109 +48,12 @@ export default function PurchasePage() {
   const [razorpayLoaded, setRazorpayLoaded] = useState(false)
 
   useEffect(() => {
-    const isTelegramBrowser =
-      /Telegram/i.test(navigator.userAgent) ||
-      /TelegramWebView/i.test(navigator.userAgent) ||
-      /TDesktop/i.test(navigator.userAgent) ||
-      !!(window as any).Telegram?.WebApp ||
-      !!(window as any).TelegramWebview ||
-      !!(window as any).Telegram ||
-      !!(window as any).TelegramWebAppInitData
-
-    console.log("PurchasePage: userAgent =", navigator.userAgent)
-    console.log("PurchasePage: isTelegram =", isTelegramBrowser)
-    console.log("PurchasePage: window.Telegram =", (window as any).Telegram)
-    console.log("PurchasePage: window.TelegramWebAppInitData =", (window as any).TelegramWebAppInitData)
-
-    if (isTelegramBrowser) {
-      // Try to redirect again for iOS
-      if (/iPhone|iPad|iPod/i.test(navigator.userAgent)) {
-        try {
-          const currentUrl = window.location.href
-          window.open(currentUrl, "_blank")
-          console.log("PurchasePage: iOS redirect attempted")
-
-          // Create a temporary link to trigger user interaction
-          const link = document.createElement("a")
-          link.href = currentUrl
-          link.target = "_blank"
-          link.style.display = "none"
-          document.body.appendChild(link)
-          link.click()
-          document.body.removeChild(link)
-          console.log("PurchasePage: iOS link-based redirect attempted")
-        } catch (e) {
-          console.error("PurchasePage: iOS redirect error", e)
-        }
-      }
-
-      // Delay showing the fallback message to allow redirect
-      setTimeout(() => {
-        setInTelegram(true)
-        setIsChecking(false)
-        console.log("PurchasePage: Fallback message shown")
-      }, 2000)
-
-      // Auto-refresh after 6 seconds
-      setTimeout(() => {
-        console.log("PurchasePage: Auto-refresh triggered")
-        window.location.href = window.location.href
-      }, 6000)
-    } else {
-      setInTelegram(false)
-      setIsChecking(false)
-      console.log("PurchasePage: Not in Telegram, rendering form")
-    }
-  }, [])
-
-  useEffect(() => {
     // Load Razorpay SDK
     const script = document.createElement("script")
     script.src = "https://checkout.razorpay.com/v1/checkout.js"
     script.onload = () => setRazorpayLoaded(true)
     document.body.appendChild(script)
   }, [])
-
-  if (isChecking) {
-    return <div>Loading...</div>
-  }
-
-  if (inTelegram) {
-    return (
-      <div className="min-h-screen flex flex-col items-center justify-center p-6 bg-gradient-to-b from-slate-900 to-slate-800 text-white">
-        <h1 className="text-2xl font-bold mb-4">Please Open in External Browser</h1>
-        <p className="mb-6 text-center max-w-md">
-          For the best payment experience with WearBefore, please open this page in your device's browser.
-        </p>
-
-        <div className="bg-black/20 p-4 rounded-lg text-left mb-6 max-w-md">
-          <p className="font-medium mb-2">How to open in external browser:</p>
-          <ol className="list-decimal pl-5 space-y-2 text-sm">
-            <li>
-              Tap the <strong>⋮</strong> (three dots) in the top-right corner
-            </li>
-            <li>
-              Select <strong>"Open in Browser"</strong> or <strong>"Open in Safari"</strong>
-            </li>
-          </ol>
-        </div>
-
-        <Button
-          asChild
-          className="bg-gradient-to-r from-blue-500 to-purple-500 hover:from-blue-600 hover:to-purple-600 border-0"
-        >
-          <a
-            href={typeof window !== "undefined" ? window.location.href : "#"}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="flex items-center"
-          >
-            Open in Browser <ExternalLink className="ml-2 h-4 w-4" />
-          </a>
-        </Button>
-      </div>
-    )
-  }
 
   const totalImages = isCustomSelected ? customAmount * 5 : selectedImages
   const totalPrice = (() => {
@@ -195,61 +102,27 @@ export default function PurchasePage() {
         return
       }
 
-      const rzp = new window.Razorpay(paymentOptions)
-      
+      const rzp = new window.Razorpay({
+        ...paymentOptions,
+        // Add handler for payment success
+        handler: (response: any) => {
+          console.log("Payment successful:", response)
+          // Redirect to Telegram bot
+          window.location.href = "https://t.me/myfashiobot"
+        },
+      })
+
       // Handle payment failure
       rzp.on("payment.failed", (res: any) => {
-        setError("Payment failed: " + (res.error?.description || "Unknown error"))
+        console.error("Payment failed:", res)
+        setError("Your payment is unsuccessful. Please try again. For any support, contact: support@wearbefore.com")
         setIsLoading(false)
       })
-      
-      // Handle successful payment
-      rzp.on("payment.success", () => {
-        // Show success message (optional)
-        setError("")
-        
-        // Create a redirect message element
-        const redirectElement = document.createElement("div")
-        redirectElement.className = "fixed inset-0 flex items-center justify-center bg-black bg-opacity-70 z-50"
-        redirectElement.innerHTML = `
-          <div class="bg-white p-6 rounded-lg max-w-md text-center">
-            <h2 class="text-2xl font-bold mb-2 text-green-600">Payment Successful!</h2>
-            <p class="mb-4">Thank you for your purchase.</p>
-            <p class="mb-6">Redirecting to WearBefore bot in <span id="countdown">10</span> seconds...</p>
-            <div class="w-full bg-gray-200 rounded-full h-2.5">
-              <div id="progress-bar" class="bg-green-600 h-2.5 rounded-full" style="width: 0%"></div>
-            </div>
-          </div>
-        `
-        document.body.appendChild(redirectElement)
-        
-        // Set up countdown and progress bar
-        let secondsLeft = 10
-        const countdownElement = document.getElementById("countdown")
-        const progressBar = document.getElementById("progress-bar")
-        
-        const countdownInterval = setInterval(() => {
-          secondsLeft -= 1
-          
-          if (countdownElement) {
-            countdownElement.innerText = secondsLeft.toString()
-          }
-          
-          if (progressBar) {
-            progressBar.style.width = `${(10 - secondsLeft) * 10}%`
-          }
-          
-          if (secondsLeft <= 0) {
-            clearInterval(countdownInterval)
-            window.location.href = "https://t.me/myfashiobot"
-          }
-        }, 1000)
-      })
-      
+
       rzp.open()
     } catch (err) {
       console.error("Payment error:", err)
-      setError("An error occurred. Please try again.")
+      setError("Your payment is unsuccessful. Please try again. For any support, contact: support@wearbefore.com")
     } finally {
       setIsLoading(false)
     }

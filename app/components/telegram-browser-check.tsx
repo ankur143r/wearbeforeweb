@@ -1,78 +1,94 @@
-// app/components/telegram-browser-check.tsx
-"use client";
+"use client"
 
-import { useEffect, useState } from "react";
-import { ExternalLink } from "lucide-react";
+import { useEffect, useState } from "react"
+import type React from "react"
 
 export function TelegramBrowserCheck({ children }: { children: React.ReactNode }) {
-  const [showFallback, setShowFallback] = useState(false);
+  const [isTelegram, setIsTelegram] = useState(false)
+  const [isChecking, setIsChecking] = useState(true)
+  const [hasSafari, setHasSafari] = useState(false)
 
   useEffect(() => {
-    const ua = navigator.userAgent;
-    const params = new URLSearchParams(window.location.search);
-    const isTelegramSource = params.get("source") === "telegram";
-    const isAndroid = /Android/i.test(ua);
-    const isIOS = /iPhone|iPad|iPod/i.test(ua);
-    const isPlainSafari = isIOS && /Safari/.test(ua) && /Version\//.test(ua);
-    const isTelegramWebView = !!(window as any).Telegram?.WebApp;
+    // Check if we're in Telegram's WebView
+    const isIOS = /iPhone|iPad|iPod/i.test(navigator.userAgent)
+    const isAndroid = /Android/i.test(navigator.userAgent)
+    const isWebView =
+      navigator.userAgent.includes("Mobile") &&
+      (window.navigator.standalone === undefined ||
+        window.innerWidth < 768 ||
+        (document.referrer === "" && window.ontouchstart !== undefined) ||
+        window.matchMedia("(display-mode: standalone)").matches === false)
 
-    // Only proceed if ?source=telegram is present
-    if (!isTelegramSource) {
-      return;
-    }
+    const isTelegramBrowser =
+      /Telegram/i.test(navigator.userAgent) ||
+      /TelegramWebView/i.test(navigator.userAgent) ||
+      /TDesktop/i.test(navigator.userAgent) ||
+      window.Telegram?.WebApp ||
+      window.TelegramWebview ||
+      window.Telegram ||
+      !!window.TelegramWebAppInitData ||
+      (isIOS && isWebView)
 
-    // If in plain Safari (not Telegram WebView), strip the query param and stop
-    if (isPlainSafari && !isTelegramWebView) {
-      const url = new URL(window.location.href);
-      url.searchParams.delete("source");
-      window.history.replaceState(null, "", url.toString());
-      return;
-    }
+    // Check if Safari is available
+    const hasSafariAvailable = isIOS && !isWebView
 
-    // Android → Chrome
-    if (isAndroid) {
-      window.location.href =
-        "googlechrome://navigate?url=" + encodeURIComponent(window.location.href);
-      return;
-    }
+    // Removed debug alert
 
-    // iOS in-app (Telegram WebView) → Safari hand‑off
-    if (isIOS) {
-      try {
-        window.open(window.location.href, "_blank");
-        const link = document.createElement("a");
-        link.href = window.location.href;
-        link.target = "_blank";
-        link.rel = "noopener";
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-      } catch (e) {
-        console.warn("iOS Safari redirect failed", e);
-      }
-      setTimeout(() => setShowFallback(true), 1500);
-    }
-  }, []);
+    setIsTelegram(isTelegramBrowser)
+    setHasSafari(hasSafariAvailable)
+    setIsChecking(false)
+  }, [])
 
-  if (showFallback) {
-    return (
-      <div className="fixed inset-0 flex items-center justify-center bg-white z-50 p-6">
-        <div className="max-w-sm text-center">
-          <p className="mb-4">
-            For the best experience, please open this page in Safari.
-          </p>
-          <a
-            href={window.location.href}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="inline-flex items-center px-6 py-3 bg-blue-600 text-white rounded-full"
-          >
-            Open in Safari <ExternalLink className="ml-2 h-4 w-4" />
-          </a>
-        </div>
-      </div>
-    );
+  if (isChecking) {
+    return <div>Loading...</div>
   }
 
-  return <>{children}</>;
+  if (!isTelegram) {
+    return <>{children}</>
+  }
+
+  return (
+    <div className="min-h-screen flex flex-col bg-gradient-to-b from-slate-900 to-slate-800 text-white">
+      <div className="container mx-auto px-4 py-8 flex-1 flex flex-col items-center justify-center text-center">
+        <div className="mb-8">
+          <h1 className="text-3xl font-bold">WearBefore</h1>
+        </div>
+
+        <div className="bg-white/10 backdrop-blur-sm p-8 rounded-xl max-w-md mx-auto shadow-xl">
+          <h2 className="text-2xl font-bold mb-4">Please Open in Browser</h2>
+
+          <div className="mb-6">
+            <p className="mb-4">
+              For the best experience with WearBefore, please open this website in your device's web browser.
+            </p>
+
+            <div className="bg-black/20 p-4 rounded-lg text-left mb-6">
+              <p className="font-medium mb-2">How to open in browser:</p>
+              <ol className="list-decimal pl-5 space-y-2 text-sm">
+                <li>
+                  Tap the <strong>⋮</strong> (three dots) in the top-right corner
+                </li>
+                <li>
+                  Select <strong>"Open in {hasSafari ? "Safari" : "Browser"}"</strong>
+                </li>
+              </ol>
+            </div>
+          </div>
+
+          <a
+            href="https://t.me/myfashiobot"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex items-center justify-center bg-gradient-to-r from-blue-500 to-purple-500 hover:from-blue-600 hover:to-purple-600 text-white font-medium py-3 px-6 rounded-full shadow-lg"
+          >
+            Try WearBefore on Telegram
+          </a>
+        </div>
+
+        <p className="mt-8 text-sm text-gray-400">
+          WearBefore works best in a full web browser for optimal performance and features.
+        </p>
+      </div>
+    </div>
+  )
 }
