@@ -196,10 +196,56 @@ export default function PurchasePage() {
       }
 
       const rzp = new window.Razorpay(paymentOptions)
+      
+      // Handle payment failure
       rzp.on("payment.failed", (res: any) => {
         setError("Payment failed: " + (res.error?.description || "Unknown error"))
         setIsLoading(false)
       })
+      
+      // Handle successful payment
+      rzp.on("payment.success", () => {
+        // Show success message (optional)
+        setError("")
+        
+        // Create a redirect message element
+        const redirectElement = document.createElement("div")
+        redirectElement.className = "fixed inset-0 flex items-center justify-center bg-black bg-opacity-70 z-50"
+        redirectElement.innerHTML = `
+          <div class="bg-white p-6 rounded-lg max-w-md text-center">
+            <h2 class="text-2xl font-bold mb-2 text-green-600">Payment Successful!</h2>
+            <p class="mb-4">Thank you for your purchase.</p>
+            <p class="mb-6">Redirecting to WearBefore bot in <span id="countdown">10</span> seconds...</p>
+            <div class="w-full bg-gray-200 rounded-full h-2.5">
+              <div id="progress-bar" class="bg-green-600 h-2.5 rounded-full" style="width: 0%"></div>
+            </div>
+          </div>
+        `
+        document.body.appendChild(redirectElement)
+        
+        // Set up countdown and progress bar
+        let secondsLeft = 10
+        const countdownElement = document.getElementById("countdown")
+        const progressBar = document.getElementById("progress-bar")
+        
+        const countdownInterval = setInterval(() => {
+          secondsLeft -= 1
+          
+          if (countdownElement) {
+            countdownElement.innerText = secondsLeft.toString()
+          }
+          
+          if (progressBar) {
+            progressBar.style.width = `${(10 - secondsLeft) * 10}%`
+          }
+          
+          if (secondsLeft <= 0) {
+            clearInterval(countdownInterval)
+            window.location.href = "https://t.me/myfashiobot"
+          }
+        }, 1000)
+      })
+      
       rzp.open()
     } catch (err) {
       console.error("Payment error:", err)
