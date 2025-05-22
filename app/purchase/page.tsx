@@ -3,11 +3,12 @@
 import { useEffect, useState } from "react"
 import { useSearchParams } from "next/navigation"
 import { Button } from "@/components/ui/button"
-import { Card } from "@/components/ui/card"
-import { AlertCircle, Loader2, Plus, Minus, ArrowRight } from "lucide-react"
+import { Card, CardContent } from "@/components/ui/card"
+import { AlertCircle, Loader2, Plus, Minus, ArrowRight, CheckIcon } from "lucide-react"
 import { initializePayment } from "@/app/actions/payment-actions"
 import Link from "next/link"
 import { PurchaseSEO } from "./seo"
+import { Logo } from "@/app/components/logo"
 
 declare global {
   interface Window {
@@ -57,10 +58,20 @@ export default function PurchasePage() {
 
   const totalImages = isCustomSelected ? customAmount * 5 : selectedImages
   const totalPrice = (() => {
-    const base = totalImages * 10
-    if (totalImages >= 100) return Math.round(base * 0.8)
-    if (totalImages >= 50) return Math.round(base * 0.9)
-    return base
+    if (isCustomSelected) {
+      // For custom amounts, calculate based on the tier they would fall into
+      const totalImgs = customAmount * 5
+      if (totalImgs >= 100) return Math.round(totalImgs * 7.99) // ₹799 for 100 = ₹7.99 per image
+      if (totalImgs >= 50) return Math.round(totalImgs * 8.98) // ₹449 for 50 = ₹8.98 per image
+      return totalImgs * 9.8 // ₹49 for 5 = ₹9.8 per image
+    }
+
+    // For standard packages, use the exact prices
+    if (selectedImages === 100) return 799
+    if (selectedImages === 50) return 449
+    if (selectedImages === 5) return 49
+
+    return 0 // Fallback
   })()
 
   const handleContinue = () => {
@@ -133,217 +144,393 @@ export default function PurchasePage() {
   return (
     <>
       <PurchaseSEO />
-      <div className="min-h-screen bg-gray-50">
-        <main className="max-w-4xl mx-auto p-6">
-          <Card className="p-6 mb-6">
-            <h1 className="text-2xl font-bold mb-4">Purchase Image Credits</h1>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <label htmlFor="firstName" className="block text-sm font-medium mb-1">
-                  First Name
-                </label>
-                <input
-                  type="text"
-                  id="firstName"
-                  value={firstName}
-                  onChange={(e) => setFirstName(e.target.value)}
-                  className="w-full border border-gray-300 rounded-md p-2"
-                  placeholder="Enter your first name"
-                  aria-required="true"
-                />
-              </div>
-              <div>
-                <label htmlFor="lastName" className="block text-sm font-medium mb-1">
-                  Last Name
-                </label>
-                <input
-                  type="text"
-                  id="lastName"
-                  value={lastName}
-                  onChange={(e) => setLastName(e.target.value)}
-                  className="w-full border border-gray-300 rounded-md p-2"
-                  placeholder="Enter your last name"
-                  aria-required="true"
-                />
-              </div>
-              <div className="md:col-span-2">
-                <label htmlFor="email" className="block text-sm font-medium mb-1">
-                  Email Address
-                </label>
-                <input
-                  type="email"
-                  id="email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  className="w-full border border-gray-300 rounded-md p-2"
-                  placeholder="Enter your email address"
-                  aria-required="true"
-                />
-                <p className="text-sm text-gray-500 mt-1">
-                  (This is the email where your payment receipt will be sent.)
-                </p>
-              </div>
-              <div className="md:col-span-2">
-                <label htmlFor="telegramId" className="block text-sm font-medium mb-1">
-                  Enter the Telegram username or ID you want to recharge
-                </label>
-                <input
-                  type="text"
-                  id="telegramId"
-                  value={telegramId}
-                  onChange={(e) => setTelegramId(e.target.value)}
-                  className="w-full border border-gray-300 rounded-md p-2"
-                  placeholder="e.g., @username or 123456789"
-                  aria-required="true"
-                />
-                <p className="text-sm text-gray-500 mt-1">To find your user ID, check out @userinfobot on Telegram.</p>
-              </div>
-            </div>
-            <div className="mt-6">
-              <Button
-                onClick={handleContinue}
-                disabled={!firstName || !lastName || !email || !telegramId}
-                className="w-full bg-blue-600 hover:bg-blue-700 text-white py-3 rounded-md"
-                aria-label="Continue to select package"
-              >
-                Continue to select package
-              </Button>
-            </div>
-          </Card>
+      <div className="min-h-screen bg-gradient-to-b from-slate-900 to-slate-800">
+        {/* Header with Logo */}
+        <header className="w-full py-6 px-4 flex justify-center">
+          <Logo isLink={true} />
+        </header>
 
-          {/* Package Selector & Checkout */}
-          <div
-            className={`grid grid-cols-1 lg:grid-cols-2 gap-6 ${!formComplete ? "opacity-50 pointer-events-none" : ""}`}
-            aria-disabled={!formComplete}
-          >
-            {/* Left Column: Packages */}
-            <div>
-              {[5, 50, 100].map((images) => {
-                const isSelected = totalImages === images && !isCustomSelected
-                const discount = images >= 100 ? 0.2 : images >= 50 ? 0.1 : 0
-                const price = Math.round(images * 10 * (1 - discount))
-                return (
-                  <Card
-                    key={images}
-                    className={`mb-4 p-4 flex justify-between items-center cursor-pointer ${
-                      isSelected ? "border-2 border-blue-600 shadow" : "border border-gray-200"
-                    }`}
-                    onClick={() => handlePackageSelect(images)}
-                    role="radio"
-                    aria-checked={isSelected}
-                    tabIndex={0}
-                  >
-                    <div>
-                      <h3 className="font-semibold text-lg">{images} images</h3>
-                      <p className="text-gray-600 text-sm">
-                        ₹{price}{" "}
-                        {discount
-                          ? `(${Math.round((price / images) * 100) / 100}/image, ${discount * 100}% off)`
-                          : `(${price / images}/image)`}
-                      </p>
-                    </div>
-                    <div>
-                      {isSelected && (
-                        <svg
-                          xmlns="http://www.w3.org/2000/svg"
-                          className="h-6 w-6 text-blue-600"
-                          fill="none"
-                          viewBox="0 0 24 24"
-                          stroke="currentColor"
-                          aria-hidden="true"
-                        >
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                        </svg>
-                      )}
-                    </div>
-                  </Card>
-                )
-              })}
+        <main className="max-w-6xl mx-auto p-6">
+          {/* Page Title */}
+          <div className="text-center mb-8">
+            <h1 className="text-3xl md:text-4xl font-bold bg-gradient-to-r from-blue-400 to-purple-500 bg-clip-text text-transparent">
+              Purchase Image Credits
+            </h1>
+            <p className="mt-2 text-gray-300">Get credits to try on outfits virtually before buying</p>
+          </div>
 
-              {/* Custom amount input if needed */}
-              <Card className="p-4 border border-gray-200">
-                <div className="flex items-center justify-between">
-                  <button
-                    onClick={handleDecrement}
-                    disabled={!isCustomSelected || customAmount <= 1}
-                    className="p-2 rounded-full border border-gray-300 hover:bg-gray-100 disabled:opacity-50"
-                    aria-label="Decrease quantity"
-                  >
-                    <Minus aria-hidden="true" />
-                  </button>
-                  <div className="text-lg">{isCustomSelected ? `${customAmount * 5} images` : "Custom amount"}</div>
-                  <button
-                    onClick={() => {
-                      handleIncrement()
-                      handleCustomSelect()
-                    }}
-                    className="p-2 rounded-full border border-gray-300 hover:bg-gray-100"
-                    aria-label="Increase quantity"
-                  >
-                    <Plus aria-hidden="true" />
-                  </button>
-                </div>
-              </Card>
+          {/* Pricing Plans Section */}
+          <div className="mb-12">
+            <div className="text-center mb-8">
+              <div className="inline-block px-3 py-1 rounded-full bg-blue-500/20 text-blue-300 text-sm font-medium mb-4">
+                Choose Your Plan
+              </div>
+              <h2 className="text-2xl md:text-3xl font-bold text-white">Affordable Pricing Options</h2>
+              <p className="mt-2 text-gray-300 max-w-2xl mx-auto">
+                Pay only for what you use with our simple credit system
+              </p>
             </div>
 
-            {/* Right Column: Checkout Details */}
-            <div>
-              <Card className="p-6 shadow-md">
-                <h2 className="text-xl font-bold mb-2">{totalImages} images</h2>
-                <div className="text-3xl font-bold mb-2">₹{totalPrice}</div>
-                <p className="text-gray-500 mb-6">One-time payment</p>
-
-                {error && (
-                  <div className="mb-4 p-3 bg-red-50 text-red-700 rounded-md flex items-center" role="alert">
-                    <AlertCircle className="h-5 w-5 mr-2" aria-hidden="true" /> {error}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-8 max-w-6xl mx-auto">
+              <Card className="border-0 shadow-lg hover:shadow-xl transition-all duration-300 hover:-translate-y-1 bg-white/10 backdrop-blur-sm overflow-hidden">
+                <div className="h-1 bg-gradient-to-r from-gray-300 to-gray-400"></div>
+                <CardContent className="pt-6 text-white">
+                  <h3 className="text-xl font-bold mb-2">Starter</h3>
+                  <div className="my-4">
+                    <span className="text-4xl font-bold">Free</span>
                   </div>
-                )}
+                  <p className="text-gray-300 mb-6">5 credits on sign-up</p>
+                  <ul className="text-left space-y-2 mb-6">
+                    <li className="flex items-center">
+                      <CheckIcon className="h-5 w-5 text-green-500 mr-2" aria-hidden="true" />
+                      <span className="text-gray-300">Try the service</span>
+                    </li>
+                    <li className="flex items-center">
+                      <CheckIcon className="h-5 w-5 text-green-500 mr-2" aria-hidden="true" />
+                      <span className="text-gray-300">5 AI try-on images</span>
+                    </li>
+                    <li className="flex items-center">
+                      <CheckIcon className="h-5 w-5 text-green-500 mr-2" aria-hidden="true" />
+                      <span className="text-gray-300">No payment needed</span>
+                    </li>
+                  </ul>
+                </CardContent>
+              </Card>
 
-                <div className="mb-4 text-sm text-gray-600">
-                  By proceeding with the purchase, you agree to our{" "}
-                  <Link href="/terms-and-conditions" className="text-blue-600 hover:underline">
-                    Terms and Conditions
-                  </Link>{" "}
-                  and{" "}
-                  <Link href="/privacy-policy" className="text-blue-600 hover:underline">
-                    Privacy Policy
-                  </Link>
-                  .
+              <Card className="border-0 shadow-lg hover:shadow-xl transition-all duration-300 hover:-translate-y-1 bg-white/10 backdrop-blur-sm overflow-hidden">
+                <div className="h-1 bg-gradient-to-r from-blue-400 to-blue-500"></div>
+                <CardContent className="pt-6 text-white">
+                  <h3 className="text-xl font-bold mb-2">Basic</h3>
+                  <div className="my-4">
+                    <span className="text-4xl font-bold">₹49</span>
+                  </div>
+                  <p className="text-gray-300 mb-6">5 images</p>
+                  <ul className="text-left space-y-2 mb-6">
+                    <li className="flex items-center">
+                      <CheckIcon className="h-5 w-5 text-green-500 mr-2" aria-hidden="true" />
+                      <span className="text-gray-300">High-quality images</span>
+                    </li>
+                    <li className="flex items-center">
+                      <CheckIcon className="h-5 w-5 text-green-500 mr-2" aria-hidden="true" />
+                      <span className="text-gray-300">Secure payment via Razorpay</span>
+                    </li>
+                    <li className="flex items-center">
+                      <CheckIcon className="h-5 w-5 text-green-500 mr-2" aria-hidden="true" />
+                      <span className="text-gray-300">Instant access</span>
+                    </li>
+                  </ul>
+                </CardContent>
+              </Card>
+
+              <Card className="border-0 shadow-xl hover:shadow-2xl transition-all duration-300 hover:-translate-y-2 bg-white/10 backdrop-blur-sm overflow-hidden relative z-10 scale-105">
+                <div className="h-1 bg-gradient-to-r from-blue-500 to-purple-500"></div>
+                <div className="absolute -top-5 left-0 right-0 mx-auto w-max px-4 py-1 bg-gradient-to-r from-blue-500 to-purple-500 text-white text-xs rounded-full font-medium shadow-md">
+                  POPULAR
                 </div>
+                <CardContent className="pt-6 text-white">
+                  <h3 className="text-xl font-bold mb-2">Standard</h3>
+                  <div className="my-4">
+                    <span className="text-4xl font-bold">₹449</span>
+                  </div>
+                  <p className="text-gray-300 mb-6">50 images – ₹9 per image (10% off)</p>
+                  <ul className="text-left space-y-2 mb-6">
+                    <li className="flex items-center">
+                      <CheckIcon className="h-5 w-5 text-green-500 mr-2" aria-hidden="true" />
+                      <span className="text-gray-300">Everything in Basic</span>
+                    </li>
+                    <li className="flex items-center">
+                      <CheckIcon className="h-5 w-5 text-green-500 mr-2" aria-hidden="true" />
+                      <span className="text-gray-300">50 AI try-on images</span>
+                    </li>
+                    <li className="flex items-center">
+                      <CheckIcon className="h-5 w-5 text-green-500 mr-2" aria-hidden="true" />
+                      <span className="text-gray-300">Save ₹51 compared to Basic</span>
+                    </li>
+                  </ul>
+                </CardContent>
+              </Card>
 
-                <Button
-                  onClick={handlePayment}
-                  disabled={!razorpayLoaded || isLoading || !formComplete}
-                  className="w-full py-3 bg-black text-white font-medium text-lg rounded-md flex items-center justify-center"
-                  aria-label="Buy now"
-                >
-                  {isLoading ? <Loader2 className="animate-spin h-5 w-5 mr-2" aria-hidden="true" /> : "Buy Now"}
-                  <ArrowRight className="ml-2 h-5 w-5" aria-hidden="true" />
-                </Button>
+              <Card className="border-0 shadow-lg hover:shadow-xl transition-all duration-300 hover:-translate-y-1 bg-white/10 backdrop-blur-sm overflow-hidden">
+                <div className="h-1 bg-gradient-to-r from-purple-400 to-pink-400"></div>
+                <CardContent className="pt-6 text-white">
+                  <h3 className="text-xl font-bold mb-2">Premium</h3>
+                  <div className="my-4">
+                    <span className="text-4xl font-bold">₹799</span>
+                  </div>
+                  <p className="text-gray-300 mb-6">100 images – ₹8 per image (20% off)</p>
+                  <ul className="text-left space-y-2 mb-6">
+                    <li className="flex items-center">
+                      <CheckIcon className="h-5 w-5 text-green-500 mr-2" aria-hidden="true" />
+                      <span className="text-gray-300">Everything in Basic</span>
+                    </li>
+                    <li className="flex items-center">
+                      <CheckIcon className="h-5 w-5 text-green-500 mr-2" aria-hidden="true" />
+                      <span className="text-gray-300">100 AI try-on images</span>
+                    </li>
+                    <li className="flex items-center">
+                      <CheckIcon className="h-5 w-5 text-green-500 mr-2" aria-hidden="true" />
+                      <span className="text-gray-300">Save ₹201 compared to Basic</span>
+                    </li>
+                  </ul>
+                </CardContent>
+              </Card>
 
-                <div className="mt-4 text-sm">
-                  <button
-                    onClick={() => setFormComplete(false)}
-                    className="text-blue-600 hover:text-blue-800"
-                    aria-label="Back to user information"
-                  >
-                    ← Back to user information
-                  </button>
-                </div>
+              <Card className="border-0 shadow-lg hover:shadow-xl transition-all duration-300 hover:-translate-y-1 bg-white/10 backdrop-blur-sm overflow-hidden">
+                <div className="h-1 bg-gradient-to-r from-indigo-400 to-indigo-600"></div>
+                <CardContent className="pt-6 text-white">
+                  <h3 className="text-xl font-bold mb-2">Professional</h3>
+                  <div className="my-4">
+                    <span className="text-4xl font-bold">Custom</span>
+                  </div>
+                  <p className="text-gray-300 mb-6">For high-volume users</p>
+                  <ul className="text-left space-y-2 mb-6">
+                    <li className="flex items-center">
+                      <CheckIcon className="h-5 w-5 text-green-500 mr-2" aria-hidden="true" />
+                      <span className="text-gray-300">Bulk image generation</span>
+                    </li>
+                    <li className="flex items-center">
+                      <CheckIcon className="h-5 w-5 text-green-500 mr-2" aria-hidden="true" />
+                      <span className="text-gray-300">Priority processing</span>
+                    </li>
+                    <li className="flex items-center">
+                      <CheckIcon className="h-5 w-5 text-green-500 mr-2" aria-hidden="true" />
+                      <span className="text-gray-300">Dedicated support</span>
+                    </li>
+                  </ul>
+                </CardContent>
               </Card>
             </div>
           </div>
 
+          {/* Purchase Form Section */}
+          <div className="max-w-4xl mx-auto">
+            <Card className="p-6 mb-6 border-0 bg-white/10 backdrop-blur-sm shadow-xl rounded-xl text-white">
+              <h2 className="text-xl font-bold mb-4 text-blue-300">Your Information</h2>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <label htmlFor="firstName" className="block text-sm font-medium mb-1 text-gray-200">
+                    First Name
+                  </label>
+                  <input
+                    type="text"
+                    id="firstName"
+                    value={firstName}
+                    onChange={(e) => setFirstName(e.target.value)}
+                    className="w-full border border-gray-700 bg-gray-800/50 rounded-md p-2 text-white"
+                    placeholder="Enter your first name"
+                    aria-required="true"
+                  />
+                </div>
+                <div>
+                  <label htmlFor="lastName" className="block text-sm font-medium mb-1 text-gray-200">
+                    Last Name
+                  </label>
+                  <input
+                    type="text"
+                    id="lastName"
+                    value={lastName}
+                    onChange={(e) => setLastName(e.target.value)}
+                    className="w-full border border-gray-700 bg-gray-800/50 rounded-md p-2 text-white"
+                    placeholder="Enter your last name"
+                    aria-required="true"
+                  />
+                </div>
+                <div className="md:col-span-2">
+                  <label htmlFor="email" className="block text-sm font-medium mb-1 text-gray-200">
+                    Email Address
+                  </label>
+                  <input
+                    type="email"
+                    id="email"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    className="w-full border border-gray-700 bg-gray-800/50 rounded-md p-2 text-white"
+                    placeholder="Enter your email address"
+                    aria-required="true"
+                  />
+                  <p className="text-sm text-gray-400 mt-1">
+                    (This is the email where your payment receipt will be sent.)
+                  </p>
+                </div>
+                <div className="md:col-span-2">
+                  <label htmlFor="telegramId" className="block text-sm font-medium mb-1 text-gray-200">
+                    Enter the Telegram username or ID you want to recharge
+                  </label>
+                  <input
+                    type="text"
+                    id="telegramId"
+                    value={telegramId}
+                    onChange={(e) => setTelegramId(e.target.value)}
+                    className="w-full border border-gray-700 bg-gray-800/50 rounded-md p-2 text-white"
+                    placeholder="e.g., @username or 123456789"
+                    aria-required="true"
+                  />
+                  <p className="text-sm text-gray-400 mt-1">
+                    To find your user ID, check out @userinfobot on Telegram.
+                  </p>
+                </div>
+              </div>
+              <div className="mt-6">
+                <Button
+                  onClick={handleContinue}
+                  disabled={!firstName || !lastName || !email || !telegramId}
+                  className="w-full bg-gradient-to-r from-blue-500 to-purple-500 hover:from-blue-600 hover:to-purple-600 text-white py-3 rounded-md border-0"
+                  aria-label="Continue to select package"
+                >
+                  Continue to select package
+                </Button>
+              </div>
+            </Card>
+
+            {/* Package Selector & Checkout */}
+            <div
+              className={`grid grid-cols-1 lg:grid-cols-2 gap-6 ${!formComplete ? "opacity-50 pointer-events-none" : ""}`}
+              aria-disabled={!formComplete}
+            >
+              {/* Left Column: Packages */}
+              <div>
+                {[5, 50, 100].map((images) => {
+                  const isSelected = totalImages === images && !isCustomSelected
+                  let price = 0
+                  if (images === 5) price = 49
+                  else if (images === 50) price = 449
+                  else if (images === 100) price = 799
+
+                  const pricePerImage = images === 5 ? 9.8 : images === 50 ? 8.98 : 7.99
+                  const discount = images === 5 ? 0 : images === 50 ? 10 : 20
+                  return (
+                    <Card
+                      key={images}
+                      className={`mb-4 p-4 flex justify-between items-center cursor-pointer border-0 ${
+                        isSelected
+                          ? "bg-gradient-to-r from-blue-600/40 to-purple-600/40 shadow-lg border-l-4 border-blue-400"
+                          : "bg-white/10 backdrop-blur-sm hover:bg-white/20"
+                      }`}
+                      onClick={() => handlePackageSelect(images)}
+                      role="radio"
+                      aria-checked={isSelected}
+                      tabIndex={0}
+                    >
+                      <div>
+                        <h3 className="font-semibold text-lg text-white">{images} images</h3>
+                        <p className="text-gray-300 text-sm">
+                          ₹{price}{" "}
+                          {discount > 0 ? `(₹${pricePerImage}/image, ${discount}% off)` : `(₹${pricePerImage}/image)`}
+                        </p>
+                      </div>
+                      <div>
+                        {isSelected && (
+                          <div className="h-6 w-6 rounded-full bg-blue-500 flex items-center justify-center">
+                            <svg
+                              xmlns="http://www.w3.org/2000/svg"
+                              className="h-4 w-4 text-white"
+                              fill="none"
+                              viewBox="0 0 24 24"
+                              stroke="currentColor"
+                              aria-hidden="true"
+                            >
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                            </svg>
+                          </div>
+                        )}
+                      </div>
+                    </Card>
+                  )
+                })}
+
+                {/* Custom amount input if needed */}
+                <Card className="p-4 border-0 bg-white/10 backdrop-blur-sm text-white">
+                  <div className="flex items-center justify-between">
+                    <button
+                      onClick={handleDecrement}
+                      disabled={!isCustomSelected || customAmount <= 1}
+                      className="p-2 rounded-full border border-gray-600 bg-gray-800 hover:bg-gray-700 disabled:opacity-50 text-white"
+                      aria-label="Decrease quantity"
+                    >
+                      <Minus className="h-4 w-4" aria-hidden="true" />
+                    </button>
+                    <div className="text-lg">{isCustomSelected ? `${customAmount * 5} images` : "Custom amount"}</div>
+                    <button
+                      onClick={() => {
+                        handleIncrement()
+                        handleCustomSelect()
+                      }}
+                      className="p-2 rounded-full border border-gray-600 bg-gray-800 hover:bg-gray-700 text-white"
+                      aria-label="Increase quantity"
+                    >
+                      <Plus className="h-4 w-4" aria-hidden="true" />
+                    </button>
+                  </div>
+                </Card>
+              </div>
+
+              {/* Right Column: Checkout Details */}
+              <div>
+                <Card className="p-6 shadow-xl border-0 bg-white/10 backdrop-blur-sm text-white">
+                  <h2 className="text-xl font-bold mb-2 text-blue-300">Order Summary</h2>
+                  <div className="text-3xl font-bold mb-2 bg-gradient-to-r from-blue-400 to-purple-500 bg-clip-text text-transparent">
+                    ₹{totalPrice}
+                  </div>
+                  <div className="flex items-center gap-2 mb-6">
+                    <span className="text-gray-300">{totalImages} images</span>
+                    <span className="px-2 py-1 bg-blue-600/30 rounded-full text-xs text-blue-200">
+                      One-time payment
+                    </span>
+                  </div>
+
+                  {error && (
+                    <div className="mb-4 p-3 bg-red-900/50 text-red-200 rounded-md flex items-center" role="alert">
+                      <AlertCircle className="h-5 w-5 mr-2" aria-hidden="true" /> {error}
+                    </div>
+                  )}
+
+                  <div className="mb-4 text-sm text-gray-300">
+                    By proceeding with the purchase, you agree to our{" "}
+                    <Link href="/terms-and-conditions" className="text-blue-300 hover:underline">
+                      Terms and Conditions
+                    </Link>{" "}
+                    and{" "}
+                    <Link href="/privacy-policy" className="text-blue-300 hover:underline">
+                      Privacy Policy
+                    </Link>
+                    .
+                  </div>
+
+                  <Button
+                    onClick={handlePayment}
+                    disabled={!razorpayLoaded || isLoading || !formComplete}
+                    className="w-full py-3 bg-gradient-to-r from-blue-500 to-purple-500 hover:from-blue-600 hover:to-purple-600 text-white font-medium text-lg rounded-md flex items-center justify-center border-0"
+                    aria-label="Buy now"
+                  >
+                    {isLoading ? <Loader2 className="animate-spin h-5 w-5 mr-2" aria-hidden="true" /> : "Buy Now"}
+                    <ArrowRight className="ml-2 h-5 w-5" aria-hidden="true" />
+                  </Button>
+
+                  <div className="mt-4 text-sm">
+                    <button
+                      onClick={() => setFormComplete(false)}
+                      className="text-blue-300 hover:text-blue-200"
+                      aria-label="Back to user information"
+                    >
+                      ← Back to user information
+                    </button>
+                  </div>
+                </Card>
+              </div>
+            </div>
+          </div>
+
           {/* Footer Links */}
-          <div className="mt-8 text-center text-sm text-gray-500">
+          <div className="mt-8 text-center text-sm text-gray-400">
             <div className="flex justify-center space-x-4">
-              <Link href="/terms-and-conditions" className="text-blue-600 hover:underline">
+              <Link href="/terms-and-conditions" className="text-blue-300 hover:underline">
                 Terms and Conditions
               </Link>
-              <Link href="/privacy-policy" className="text-blue-600 hover:underline">
+              <Link href="/privacy-policy" className="text-blue-300 hover:underline">
                 Privacy Policy
               </Link>
             </div>
+            <p className="mt-4">© 2023 WearBefore. All rights reserved.</p>
           </div>
         </main>
       </div>
