@@ -1,6 +1,4 @@
 "use client"
-
-import Image from "next/image"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import {
@@ -161,33 +159,17 @@ export default function Home() {
               </div>
               <div className="relative h-[500px] w-full rounded-2xl overflow-hidden shadow-xl shadow-blue-500/10">
                 <div className="absolute inset-0 bg-gradient-to-r from-blue-500/20 to-purple-500/20 z-10 rounded-2xl"></div>
-                <div className="absolute inset-0 flex flex-col md:flex-row">
-                  <div className="flex-1 relative">
-                    <div className="absolute top-4 left-4 bg-black/50 text-white text-xs px-2 py-1 rounded z-20">
-                      Original Photo
-                    </div>
-                    <Image
-                      src="/placeholder.svg?height=500&width=400"
-                      alt="Example of an original user photo before virtual try-on"
-                      fill
-                      sizes="(max-width: 768px) 100vw, 50vw"
-                      priority
-                      className="object-cover"
-                    />
-                  </div>
-                  <div className="flex-1 relative">
-                    <div className="absolute top-4 left-4 bg-black/50 text-white text-xs px-2 py-1 rounded z-20">
-                      AI Try-On Result
-                    </div>
-                    <Image
-                      src="/placeholder.svg?height=500&width=400"
-                      alt="Example of AI-generated virtual try-on result showing a person wearing a new outfit"
-                      fill
-                      sizes="(max-width: 768px) 100vw, 50vw"
-                      className="object-cover"
-                    />
-                  </div>
-                </div>
+                <video
+                  className="w-full h-full object-cover"
+                  autoPlay
+                  muted
+                  loop
+                  playsInline
+                  poster="/video-poster.jpg"
+                >
+                  <source src="/wearbefore-demo.mp4" type="video/mp4" />
+                  Your browser does not support the video tag.
+                </video>
                 <div className="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent flex items-end p-6 z-20">
                   <div className="text-white">
                     <p className="font-medium">See yourself in any outfit instantly</p>
