@@ -1,4 +1,6 @@
 "use client"
+
+import Image from "next/image"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import {
@@ -22,6 +24,15 @@ import { useState } from "react"
 import { CreditModal } from "./components/credit-modal"
 import Link from "next/link"
 import Script from "next/script"
+
+// X (Twitter) Icon component
+function XIcon({ className }: { className?: string }) {
+  return (
+    <svg className={className} viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+      <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z" />
+    </svg>
+  )
+}
 
 export default function Home() {
   const [isCreditModalOpen, setIsCreditModalOpen] = useState(false)
@@ -83,7 +94,7 @@ export default function Home() {
                 className="rounded-full bg-gradient-to-r from-blue-500 to-purple-500 hover:from-blue-600 hover:to-purple-600 border-0"
               >
                 <a
-                  href="https://t.me/myfashiobot"
+                  href="https://t.me/WearBefore_bot"
                   target="_blank"
                   rel="noopener noreferrer"
                   className="flex items-center gap-2"
@@ -149,7 +160,7 @@ export default function Home() {
                     size="lg"
                     className="rounded-full bg-gradient-to-r from-blue-500 to-purple-500 hover:from-blue-600 hover:to-purple-600 border-0 shadow-lg shadow-blue-500/20"
                   >
-                    <a href="https://t.me/myfashiobot" target="_blank" rel="noopener noreferrer">
+                    <a href="https://t.me/WearBefore_bot" target="_blank" rel="noopener noreferrer">
                       <Smartphone className="mr-2 h-5 w-5" aria-hidden="true" />
                       Try it Now on Telegram
                     </a>
@@ -159,17 +170,33 @@ export default function Home() {
               </div>
               <div className="relative h-[500px] w-full rounded-2xl overflow-hidden shadow-xl shadow-blue-500/10">
                 <div className="absolute inset-0 bg-gradient-to-r from-blue-500/20 to-purple-500/20 z-10 rounded-2xl"></div>
-                <video
-                  className="w-full h-full object-cover"
-                  autoPlay
-                  muted
-                  loop
-                  playsInline
-                  poster="/video-poster.jpg"
-                >
-                  <source src="/wearbefore-demo.mp4" type="video/mp4" />
-                  Your browser does not support the video tag.
-                </video>
+                <div className="absolute inset-0 flex flex-col md:flex-row">
+                  <div className="flex-1 relative">
+                    <div className="absolute top-4 left-4 bg-black/50 text-white text-xs px-2 py-1 rounded z-20">
+                      Original Photo
+                    </div>
+                    <Image
+                      src="/placeholder.svg?height=500&width=400"
+                      alt="Example of an original user photo before virtual try-on"
+                      fill
+                      sizes="(max-width: 768px) 100vw, 50vw"
+                      priority
+                      className="object-cover"
+                    />
+                  </div>
+                  <div className="flex-1 relative">
+                    <div className="absolute top-4 left-4 bg-black/50 text-white text-xs px-2 py-1 rounded z-20">
+                      AI Try-On Result
+                    </div>
+                    <Image
+                      src="/placeholder.svg?height=500&width=400"
+                      alt="Example of AI-generated virtual try-on result showing a person wearing a new outfit"
+                      fill
+                      sizes="(max-width: 768px) 100vw, 50vw"
+                      className="object-cover"
+                    />
+                  </div>
+                </div>
                 <div className="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent flex items-end p-6 z-20">
                   <div className="text-white">
                     <p className="font-medium">See yourself in any outfit instantly</p>
@@ -499,7 +526,7 @@ export default function Home() {
                   asChild
                   className="w-full rounded-full bg-gradient-to-r from-gray-500 to-gray-600 hover:from-gray-600 hover:to-gray-700 border-0"
                 >
-                  <a href="https://web.telegram.org/k/#@MyFashiobot" target="_blank" rel="noopener noreferrer">
+                  <a href="https://t.me/WearBefore_bot" target="_blank" rel="noopener noreferrer">
                     Get Started
                   </a>
                 </Button>
@@ -607,7 +634,7 @@ export default function Home() {
               <CardContent className="pt-6">
                 <h3 className="text-xl font-bold mb-2">Professional</h3>
                 <div className="my-4">
-                  <span className="text-4xl font-bold">Custom</span>
+                  <span className="text-4xl font-bold">Bulk</span>
                 </div>
                 <p className="text-gray-600 mb-6">For high-volume users</p>
                 <ul className="text-left space-y-2 mb-6">
@@ -727,7 +754,7 @@ export default function Home() {
                 variant="secondary"
                 className="rounded-full shadow-lg hover:shadow-xl transition-all duration-300 hover:-translate-y-1"
               >
-                <a href="https://t.me/myfashiobot" target="_blank" rel="noopener noreferrer">
+                <a href="https://t.me/WearBefore_bot" target="_blank" rel="noopener noreferrer">
                   <Smartphone className="mr-2 h-5 w-5" aria-hidden="true" />
                   Try it Now on Telegram
                 </a>
@@ -796,11 +823,32 @@ export default function Home() {
                 <h3 className="text-lg font-semibold mb-4">Contact</h3>
                 <p className="text-gray-400">Need help? Email us at support@wearbefore.com</p>
                 <div className="mt-4 flex space-x-4">
-                  <a href="#" className="text-gray-400 hover:text-white transition-colors" aria-label="Facebook">
+                  <a
+                    href="https://www.facebook.com/share/19Mrs6xNKK/?source=wearbefore.com"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-gray-400 hover:text-white transition-colors"
+                    aria-label="Facebook"
+                  >
                     <FacebookIcon className="h-6 w-6" aria-hidden="true" />
                   </a>
-                  <a href="#" className="text-gray-400 hover:text-white transition-colors" aria-label="Instagram">
+                  <a
+                    href="https://www.instagram.com/wearbefore?source=wearbefore.com"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-gray-400 hover:text-white transition-colors"
+                    aria-label="Instagram"
+                  >
                     <InstagramIcon className="h-6 w-6" aria-hidden="true" />
+                  </a>
+                  <a
+                    href="https://x.com/wearbefore?source=wearbefore.com"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-gray-400 hover:text-white transition-colors"
+                    aria-label="X (Twitter)"
+                  >
+                    <XIcon className="h-6 w-6" aria-hidden="true" />
                   </a>
                 </div>
               </div>

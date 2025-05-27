@@ -25,6 +25,7 @@ export default function PurchasePage() {
   const urlUsername = searchParams.get("username") || ""
   const urlFirstName = searchParams.get("first_name") || ""
   const urlLastName = searchParams.get("last_name") || ""
+  const preselectedPackage = searchParams.get("package") || ""
 
   // Determine telegram ID/username to use (user_id takes precedence)
   const defaultTelegramValue = urlUserId || urlUsername || defaultTgId
@@ -35,8 +36,20 @@ export default function PurchasePage() {
   const [email, setEmail] = useState("")
   const [telegramId, setTelegramId] = useState(defaultTelegramValue)
 
+  // Form validation states
+  const [firstNameError, setFirstNameError] = useState("")
+  const [lastNameError, setLastNameError] = useState("")
+  const [emailError, setEmailError] = useState("")
+  const [telegramIdError, setTelegramIdError] = useState("")
+  const [showValidationErrors, setShowValidationErrors] = useState(false)
+
   // Package selection state
-  const [selectedImages, setSelectedImages] = useState(5)
+  const [selectedImages, setSelectedImages] = useState(() => {
+    if (preselectedPackage === "5") return 5
+    if (preselectedPackage === "50") return 50
+    if (preselectedPackage === "100") return 100
+    return 5
+  })
   const [isCustomSelected, setCustomSelected] = useState(false)
   const [customAmount, setCustomAmount] = useState(1)
 
@@ -55,6 +68,59 @@ export default function PurchasePage() {
     script.onload = () => setRazorpayLoaded(true)
     document.body.appendChild(script)
   }, [])
+
+  // Validation functions
+  const validateName = (name: string) => {
+    const nameRegex = /^[a-zA-Z\s'.]+$/
+    return nameRegex.test(name.trim())
+  }
+
+  const validateEmail = (email: string) => {
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+    return emailRegex.test(email.trim())
+  }
+
+  const validateTelegramId = (id: string) => {
+    const telegramIdRegex = /^\d+$/
+    return telegramIdRegex.test(id.trim())
+  }
+
+  // Handle input changes with validation
+  const handleFirstNameChange = (value: string) => {
+    setFirstName(value)
+    if (value.trim() && !validateName(value)) {
+      setFirstNameError("First name can only contain letters, spaces, apostrophes, and periods")
+    } else {
+      setFirstNameError("")
+    }
+  }
+
+  const handleLastNameChange = (value: string) => {
+    setLastName(value)
+    if (value.trim() && !validateName(value)) {
+      setLastNameError("Last name can only contain letters, spaces, apostrophes, and periods")
+    } else {
+      setLastNameError("")
+    }
+  }
+
+  const handleEmailChange = (value: string) => {
+    setEmail(value)
+    if (value.trim() && !validateEmail(value)) {
+      setEmailError("Please enter a valid email address")
+    } else {
+      setEmailError("")
+    }
+  }
+
+  const handleTelegramIdChange = (value: string) => {
+    setTelegramId(value)
+    if (value.trim() && !validateTelegramId(value)) {
+      setTelegramIdError("Telegram ID must contain only numbers")
+    } else {
+      setTelegramIdError("")
+    }
+  }
 
   const totalImages = isCustomSelected ? customAmount * 5 : selectedImages
   const totalPrice = (() => {
@@ -75,8 +141,20 @@ export default function PurchasePage() {
   })()
 
   const handleContinue = () => {
-    if (firstName && lastName && email && telegramId) {
+    setShowValidationErrors(true)
+
+    // Check if mandatory fields are filled and valid
+    const isFirstNameValid = firstName.trim() && validateName(firstName)
+    const isEmailValid = email.trim() && validateEmail(email)
+    const isTelegramIdValid = telegramId.trim() && validateTelegramId(telegramId)
+
+    if (isFirstNameValid && isEmailValid && isTelegramIdValid) {
       setFormComplete(true)
+      // Scroll to package selection
+      const packageSection = document.getElementById("package-selection")
+      if (packageSection) {
+        packageSection.scrollIntoView({ behavior: "smooth" })
+      }
     }
   }
 
@@ -84,9 +162,19 @@ export default function PurchasePage() {
     setCustomSelected(false)
     setSelectedImages(images)
   }
+
   const handleCustomSelect = () => setCustomSelected(true)
   const handleIncrement = () => setCustomAmount((prev) => prev + 1)
   const handleDecrement = () => setCustomAmount((prev) => Math.max(1, prev - 1))
+
+  const scrollToForm = (packageImages: number) => {
+    setSelectedImages(packageImages)
+    setCustomSelected(false)
+    const formSection = document.getElementById("user-form")
+    if (formSection) {
+      formSection.scrollIntoView({ behavior: "smooth" })
+    }
+  }
 
   async function handlePayment() {
     setIsLoading(true)
@@ -121,7 +209,7 @@ export default function PurchasePage() {
         handler: (response) => {
           console.log("Payment successful:", response)
           // Redirect to Telegram bot
-          window.location.href = "https://t.me/myfashiobot"
+          window.location.href = "https://t.me/WearBefore_bot"
         },
       })
 
@@ -194,6 +282,14 @@ export default function PurchasePage() {
                       <span className="text-gray-300">No payment needed</span>
                     </li>
                   </ul>
+                  <Button
+                    asChild
+                    className="w-full rounded-full bg-gradient-to-r from-gray-500 to-gray-600 hover:from-gray-600 hover:to-gray-700 border-0"
+                  >
+                    <a href="https://t.me/WearBefore_bot" target="_blank" rel="noopener noreferrer">
+                      Get Started
+                    </a>
+                  </Button>
                 </CardContent>
               </Card>
 
@@ -219,6 +315,12 @@ export default function PurchasePage() {
                       <span className="text-gray-300">Instant access</span>
                     </li>
                   </ul>
+                  <Button
+                    onClick={() => scrollToForm(5)}
+                    className="w-full rounded-full bg-gradient-to-r from-blue-400 to-blue-500 hover:from-blue-500 hover:to-blue-600 border-0"
+                  >
+                    Buy Package
+                  </Button>
                 </CardContent>
               </Card>
 
@@ -247,6 +349,12 @@ export default function PurchasePage() {
                       <span className="text-gray-300">Save ₹51 compared to Basic</span>
                     </li>
                   </ul>
+                  <Button
+                    onClick={() => scrollToForm(50)}
+                    className="w-full rounded-full bg-gradient-to-r from-blue-500 to-purple-500 hover:from-blue-600 hover:to-purple-600 border-0 shadow-lg shadow-blue-500/20"
+                  >
+                    Buy Package
+                  </Button>
                 </CardContent>
               </Card>
 
@@ -272,6 +380,12 @@ export default function PurchasePage() {
                       <span className="text-gray-300">Save ₹201 compared to Basic</span>
                     </li>
                   </ul>
+                  <Button
+                    onClick={() => scrollToForm(100)}
+                    className="w-full rounded-full bg-gradient-to-r from-purple-400 to-pink-400 hover:from-purple-500 hover:to-pink-500 border-0"
+                  >
+                    Buy Package
+                  </Button>
                 </CardContent>
               </Card>
 
@@ -280,7 +394,7 @@ export default function PurchasePage() {
                 <CardContent className="pt-6 text-white">
                   <h3 className="text-xl font-bold mb-2">Professional</h3>
                   <div className="my-4">
-                    <span className="text-4xl font-bold">Custom</span>
+                    <span className="text-4xl font-bold">Bulk</span>
                   </div>
                   <p className="text-gray-300 mb-6">For high-volume users</p>
                   <ul className="text-left space-y-2 mb-6">
@@ -297,29 +411,44 @@ export default function PurchasePage() {
                       <span className="text-gray-300">Dedicated support</span>
                     </li>
                   </ul>
+                  <Button
+                    asChild
+                    className="w-full rounded-full bg-gradient-to-r from-indigo-400 to-indigo-600 hover:from-indigo-500 hover:to-indigo-700 border-0"
+                  >
+                    <a href="mailto:support@wearbefore.com" target="_blank" rel="noopener noreferrer">
+                      Contact Us
+                    </a>
+                  </Button>
                 </CardContent>
               </Card>
             </div>
           </div>
 
           {/* Purchase Form Section */}
-          <div className="max-w-4xl mx-auto">
+          <div className="max-w-4xl mx-auto" id="user-form">
             <Card className="p-6 mb-6 border-0 bg-white/10 backdrop-blur-sm shadow-xl rounded-xl text-white">
               <h2 className="text-xl font-bold mb-4 text-blue-300">Your Information</h2>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                   <label htmlFor="firstName" className="block text-sm font-medium mb-1 text-gray-200">
-                    First Name
+                    First Name <span className="text-red-400">*</span>
                   </label>
                   <input
                     type="text"
                     id="firstName"
                     value={firstName}
-                    onChange={(e) => setFirstName(e.target.value)}
-                    className="w-full border border-gray-700 bg-gray-800/50 rounded-md p-2 text-white"
+                    onChange={(e) => handleFirstNameChange(e.target.value)}
+                    className={`w-full border rounded-md p-2 text-white bg-gray-800/50 ${
+                      firstNameError || (showValidationErrors && !firstName.trim())
+                        ? "border-red-500"
+                        : "border-gray-700"
+                    }`}
                     placeholder="Enter your first name"
                     aria-required="true"
                   />
+                  {(firstNameError || (showValidationErrors && !firstName.trim())) && (
+                    <p className="text-red-400 text-sm mt-1">{firstNameError || "First name is required"}</p>
+                  )}
                 </div>
                 <div>
                   <label htmlFor="lastName" className="block text-sm font-medium mb-1 text-gray-200">
@@ -329,51 +458,73 @@ export default function PurchasePage() {
                     type="text"
                     id="lastName"
                     value={lastName}
-                    onChange={(e) => setLastName(e.target.value)}
-                    className="w-full border border-gray-700 bg-gray-800/50 rounded-md p-2 text-white"
+                    onChange={(e) => handleLastNameChange(e.target.value)}
+                    className={`w-full border rounded-md p-2 text-white bg-gray-800/50 ${
+                      lastNameError ? "border-red-500" : "border-gray-700"
+                    }`}
                     placeholder="Enter your last name"
-                    aria-required="true"
                   />
+                  {lastNameError && <p className="text-red-400 text-sm mt-1">{lastNameError}</p>}
                 </div>
                 <div className="md:col-span-2">
                   <label htmlFor="email" className="block text-sm font-medium mb-1 text-gray-200">
-                    Email Address
+                    Email Address <span className="text-red-400">*</span>
                   </label>
                   <input
                     type="email"
                     id="email"
                     value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    className="w-full border border-gray-700 bg-gray-800/50 rounded-md p-2 text-white"
+                    onChange={(e) => handleEmailChange(e.target.value)}
+                    className={`w-full border rounded-md p-2 text-white bg-gray-800/50 ${
+                      emailError || (showValidationErrors && !email.trim()) ? "border-red-500" : "border-gray-700"
+                    }`}
                     placeholder="Enter your email address"
                     aria-required="true"
                   />
+                  {(emailError || (showValidationErrors && !email.trim())) && (
+                    <p className="text-red-400 text-sm mt-1">{emailError || "Email address is required"}</p>
+                  )}
                   <p className="text-sm text-gray-400 mt-1">
                     (This is the email where your payment receipt will be sent.)
                   </p>
                 </div>
                 <div className="md:col-span-2">
                   <label htmlFor="telegramId" className="block text-sm font-medium mb-1 text-gray-200">
-                    Enter the Telegram username or ID you want to recharge
+                    Enter the Telegram ID you want to recharge <span className="text-red-400">*</span>
                   </label>
                   <input
                     type="text"
                     id="telegramId"
                     value={telegramId}
-                    onChange={(e) => setTelegramId(e.target.value)}
-                    className="w-full border border-gray-700 bg-gray-800/50 rounded-md p-2 text-white"
-                    placeholder="e.g., @username or 123456789"
+                    onChange={(e) => handleTelegramIdChange(e.target.value)}
+                    className={`w-full border rounded-md p-2 text-white bg-gray-800/50 ${
+                      telegramIdError || (showValidationErrors && !telegramId.trim())
+                        ? "border-red-500"
+                        : "border-gray-700"
+                    }`}
+                    placeholder="e.g., 123456789"
                     aria-required="true"
                   />
+                  {(telegramIdError || (showValidationErrors && !telegramId.trim())) && (
+                    <p className="text-red-400 text-sm mt-1">{telegramIdError || "Telegram ID is required"}</p>
+                  )}
                   <p className="text-sm text-gray-400 mt-1">
-                    To find your user ID, check out @userinfobot on Telegram.
+                    If you don't know your Telegram ID, please tap /recharge from{" "}
+                    <a
+                      href="https://t.me/WearBefore_bot"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-blue-300 hover:underline"
+                    >
+                      WearBefore bot's menu on telegram
+                    </a>
+                    .
                   </p>
                 </div>
               </div>
               <div className="mt-6">
                 <Button
                   onClick={handleContinue}
-                  disabled={!firstName || !lastName || !email || !telegramId}
                   className="w-full bg-gradient-to-r from-blue-500 to-purple-500 hover:from-blue-600 hover:to-purple-600 text-white py-3 rounded-md border-0"
                   aria-label="Continue to select package"
                 >
@@ -384,6 +535,7 @@ export default function PurchasePage() {
 
             {/* Package Selector & Checkout */}
             <div
+              id="package-selection"
               className={`grid grid-cols-1 lg:grid-cols-2 gap-6 ${!formComplete ? "opacity-50 pointer-events-none" : ""}`}
               aria-disabled={!formComplete}
             >
