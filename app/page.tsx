@@ -171,7 +171,11 @@ export default function Home() {
               <div className="relative h-[500px] w-full rounded-2xl overflow-hidden shadow-xl shadow-blue-500/10">
                 <div className="absolute inset-0 bg-gradient-to-r from-blue-500/20 to-purple-500/20 z-10 rounded-2xl"></div>
                 <video className="absolute inset-0 w-full h-full object-cover" autoPlay loop muted playsInline>
-                  <source src="/wearbefore-demo.mp4" type="video/mp4" />
+                  <source
+                    src="https://hebbkx1anhila5yf.public.blob.vercel-storage.com/wearbefore%201920%20by%201080p-wLYhkQPsXF8FEFCuKKvK7JmI1prHQh.mp4"
+                    type="video/mp4"
+                  />
+                  <source src="/wearbefore-demo.webm" type="video/webm" />
                   Your browser does not support the video tag.
                 </video>
                 <div className="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent flex items-end p-6 z-20">
