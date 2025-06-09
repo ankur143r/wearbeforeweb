@@ -79,6 +79,9 @@ export default function Home() {
                 <a href="#how-it-works" className="text-gray-300 hover:text-white transition-colors">
                   How It Works
                 </a>
+                <Link href="/blog" className="text-gray-300 hover:text-white transition-colors">
+                  Blog
+                </Link>
                 <a href="#use-cases" className="text-gray-300 hover:text-white transition-colors">
                   Use Cases
                 </a>
@@ -783,6 +786,11 @@ export default function Home() {
                     <a href="#how-it-works" className="text-gray-400 hover:text-white transition-colors">
                       How It Works
                     </a>
+                  </li>
+                  <li>
+                    <Link href="/blog" className="text-gray-400 hover:text-white transition-colors">
+                      Blog
+                    </Link>
                   </li>
                   <li>
                     <a href="#use-cases" className="text-gray-400 hover:text-white transition-colors">
