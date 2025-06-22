@@ -22,6 +22,9 @@ export async function initializePayment(params: PaymentInitParams) {
       return { success: false, error: orderResult.error || "Failed to create order" }
     }
 
+    const callbackUrl =
+      process.env.NEXT_PUBLIC_BASE_URL + "/payment-success"
+
     // Build Razorpay checkout options using the returned data
     const options = {
       key: orderResult.key_id, // Key ID from the order result
@@ -38,6 +41,8 @@ export async function initializePayment(params: PaymentInitParams) {
         telegram_id: telegramId,
         credits_requested: credits.toString(),
       },
+      callback_url: callbackUrl,
+      redirect: true,
       theme: {
         color: "#0077cc",
       },

@@ -28,3 +28,7 @@ Continue building your app on:
 2. Deploy your chats from the v0 interface
 3. Changes are automatically pushed to this repository
 4. Vercel deploys the latest version from this repository
+
+## Environment Variables
+
+Set `NEXT_PUBLIC_BASE_URL` to the full base URL of your deployment (for example, `https://wearbefore.com`). It is used to construct the Razorpay callback URL in production.
