@@ -203,15 +203,11 @@ export default function PurchasePage() {
         return
       }
 
-      const rzp = new window.Razorpay({
-        ...paymentOptions,
-        // Add handler for payment success
-        handler: (response) => {
-          console.log("Payment successful:", response)
-          // Redirect to Telegram bot
-          window.location.href = "https://t.me/WearBefore_bot"
-        },
-      })
+      paymentOptions.handler = (response: any) => {
+        console.log("Payment successful:", response)
+      }
+
+      const rzp = new window.Razorpay(paymentOptions)
 
       // Handle payment failure - just log to console, don't show error message
       rzp.on("payment.failed", () => {
