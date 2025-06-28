@@ -1,3 +1,4 @@
+// page.tsx
 "use client"
 
 import { useEffect, useState } from "react"
@@ -202,13 +203,18 @@ export default function PurchasePage() {
         setIsLoading(false)
         return
       }
-
-      paymentOptions.handler = (response: any) => {
-        console.log("Payment successful:", response)
+      
+      // --- MODIFICATION START ---
+      // The `handler` function has been removed and replaced with `redirect: true`.
+      // This allows the `callback_url` set on the server to function correctly.
+      const razorpayOptions = {
+        ...paymentOptions,
+        redirect: true,
       }
 
-      const rzp = new window.Razorpay(paymentOptions)
-
+      const rzp = new window.Razorpay(razorpayOptions)
+      // --- MODIFICATION END ---
+      
       // Handle payment failure - just log to console, don't show error message
       rzp.on("payment.failed", () => {
         // Simply log that payment failed without accessing error details
