@@ -141,11 +141,15 @@ export function CreditModal({ isOpen, onClose, telegramId, firstName, lastName, 
       }
 
       // Create Razorpay instance with options from server
-      paymentOptions.handler = (response: any) => {
-        console.log("Payment successful:", response)
-      }
-
-      const razorpayInstance = new window.Razorpay(paymentOptions)
+      const razorpayInstance = new window.Razorpay({
+        ...paymentOptions,
+        // Add handler for payment success
+        handler: (response) => {
+          console.log("Payment successful:", response)
+          // Redirect to Telegram bot
+          window.location.href = "https://t.me/myfashiobot"
+        },
+      })
 
       // Handle payment failure - just log to console, don't show error message
       razorpayInstance.on("payment.failed", () => {
