@@ -27,13 +27,7 @@ export async function createPaymentOrder(amount: number, credits: number) {
     const order = await razorpay.orders.create({
       amount: amount * 100,           // amount in paise
       currency: "INR",
-      receipt: receiptId,               // <=40 chars
-
-      // --- MODIFICATION START ---
-      // This tells Razorpay where to send the user after a successful payment.
-      callback_url: "https://t.me/WearBefore_bot",
-      // --- MODIFICATION END ---
-
+      receipt: receiptId,             // <=40 chars
       notes: {
         credits: credits.toString(),
         product: "WearBefore Image Credits",

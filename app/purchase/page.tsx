@@ -1,4 +1,3 @@
-// page.tsx
 "use client"
 
 import { useEffect, useState } from "react"
@@ -203,18 +202,17 @@ export default function PurchasePage() {
         setIsLoading(false)
         return
       }
-      
-      // --- MODIFICATION START ---
-      // The `handler` function has been removed and replaced with `redirect: true`.
-      // This allows the `callback_url` set on the server to function correctly.
-      const razorpayOptions = {
-        ...paymentOptions,
-        redirect: true,
-      }
 
-      const rzp = new window.Razorpay(razorpayOptions)
-      // --- MODIFICATION END ---
-      
+      const rzp = new window.Razorpay({
+        ...paymentOptions,
+        // Add handler for payment success
+        handler: (response) => {
+          console.log("Payment successful:", response)
+          // Redirect to Telegram bot
+          window.location.href = "https://t.me/WearBefore_bot"
+        },
+      })
+
       // Handle payment failure - just log to console, don't show error message
       rzp.on("payment.failed", () => {
         // Simply log that payment failed without accessing error details
