@@ -205,20 +205,24 @@ export default function PurchasePage() {
       }
       
       // --- MODIFICATION START ---
-      // The `handler` function has been removed and replaced with `redirect: true`.
-      // This allows the `callback_url` set on the server to function correctly.
-      const razorpayOptions = {
+      // The `handler` function is now restored. It will execute on successful payment
+      // and perform the redirect to your Telegram bot.
+      const rzp = new window.Razorpay({
         ...paymentOptions,
-        redirect: true,
-      }
-
-      const rzp = new window.Razorpay(razorpayOptions)
+        handler: function (response: any) {
+          // This function will execute upon a successful payment
+          console.log("Payment successful, redirecting. Response:", response)
+          setIsLoading(true); // Keep UI in loading state during redirect
+          window.location.href = "https://t.me/WearBefore_bot"
+        },
+      })
       // --- MODIFICATION END ---
       
       // Handle payment failure - just log to console, don't show error message
-      rzp.on("payment.failed", () => {
+      rzp.on("payment.failed", (response: any) => {
         // Simply log that payment failed without accessing error details
-        console.log("Payment failed or was cancelled")
+        console.error("Payment failed. Response:", response)
+        setError("Payment failed. Please check your details and try again.");
         setIsLoading(false)
       })
 
