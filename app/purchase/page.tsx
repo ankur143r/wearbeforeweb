@@ -66,10 +66,19 @@ export default function PurchasePage() {
     if (isPreviewHost) {
       // Stub Razorpay in preview
       if (!window.Razorpay) {
-        window.Razorpay = () => ({
-          open() {},
-          on() {},
-        })
+        // Provide a constructor-compatible preview stub
+        // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+        // @ts-ignore
+        window.Razorpay = function RazorpayStub() {
+          return {
+            open() {
+              console.log("[Preview] Razorpay.open()")
+            },
+            on() {
+              /* no-op */
+            },
+          }
+        }
       }
       setRazorpayLoaded(true)
       return

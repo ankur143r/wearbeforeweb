@@ -79,12 +79,18 @@ export function CreditModal({ isOpen, onClose, telegramId, firstName, lastName, 
       // ----- NEW: skip script fetch inside the next-lite preview -----
       const isPreviewHost = typeof window !== "undefined" && window.location.hostname.endsWith("lite.vusercontent.net")
       if (isPreviewHost) {
-        // Provide a no-op stub so the rest of the component can call Razorpay safely
-        if (!window.Razorpay) {
-          window.Razorpay = () => ({
-            open() {},
-            on() {},
-          })
+        // Provide a constructor-compatible preview stub
+        // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+        // @ts-ignore – we just need a loose shim in preview
+        window.Razorpay = function RazorpayStub() {
+          return {
+            open() {
+              console.log("[Preview] Razorpay.open()")
+            },
+            on() {
+              /* no-op */
+            },
+          }
         }
         setRazorpayLoaded(true)
         return
