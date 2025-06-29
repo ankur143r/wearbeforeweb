@@ -1,4 +1,3 @@
-// page.tsx
 "use client"
 
 import { useEffect, useState } from "react"
@@ -203,26 +202,21 @@ export default function PurchasePage() {
         setIsLoading(false)
         return
       }
-      
-      // --- MODIFICATION START ---
-      // The `handler` function is now restored. It will execute on successful payment
-      // and perform the redirect to your Telegram bot.
+
       const rzp = new window.Razorpay({
         ...paymentOptions,
-        handler: function (response: any) {
-          // This function will execute upon a successful payment
-          console.log("Payment successful, redirecting. Response:", response)
-          setIsLoading(true); // Keep UI in loading state during redirect
+        // Add handler for payment success
+        handler: (response) => {
+          console.log("Payment successful:", response)
+          // Redirect to Telegram bot
           window.location.href = "https://t.me/WearBefore_bot"
         },
       })
-      // --- MODIFICATION END ---
-      
+
       // Handle payment failure - just log to console, don't show error message
-      rzp.on("payment.failed", (response: any) => {
+      rzp.on("payment.failed", () => {
         // Simply log that payment failed without accessing error details
-        console.error("Payment failed. Response:", response)
-        setError("Payment failed. Please check your details and try again.");
+        console.log("Payment failed or was cancelled")
         setIsLoading(false)
       })
 
