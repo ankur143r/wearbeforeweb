@@ -62,11 +62,29 @@ export default function PurchasePage() {
   const [razorpayLoaded, setRazorpayLoaded] = useState(false)
 
   useEffect(() => {
-    // Load Razorpay SDK
+    const isPreviewHost = window.location.hostname.endsWith("lite.vusercontent.net")
+    if (isPreviewHost) {
+      // Stub Razorpay in preview
+      if (!window.Razorpay) {
+        window.Razorpay = () => ({
+          open() {},
+          on() {},
+        })
+      }
+      setRazorpayLoaded(true)
+      return
+    }
+
+    // Production / real deploy: load the SDK
     const script = document.createElement("script")
     script.src = "https://checkout.razorpay.com/v1/checkout.js"
     script.onload = () => setRazorpayLoaded(true)
+    script.onerror = () => console.error("Failed to load Razorpay SDK")
     document.body.appendChild(script)
+
+    return () => {
+      document.body.removeChild(script)
+    }
   }, [])
 
   // Validation functions

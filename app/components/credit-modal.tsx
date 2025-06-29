@@ -76,6 +76,20 @@ export function CreditModal({ isOpen, onClose, telegramId, firstName, lastName, 
   // Load Razorpay script
   useEffect(() => {
     if (isOpen && !razorpayLoaded) {
+      // ----- NEW: skip script fetch inside the next-lite preview -----
+      const isPreviewHost = typeof window !== "undefined" && window.location.hostname.endsWith("lite.vusercontent.net")
+      if (isPreviewHost) {
+        // Provide a no-op stub so the rest of the component can call Razorpay safely
+        if (!window.Razorpay) {
+          window.Razorpay = () => ({
+            open() {},
+            on() {},
+          })
+        }
+        setRazorpayLoaded(true)
+        return
+      }
+      // ----------------------------------------------------------------
       try {
         const script = document.createElement("script")
         script.src = "https://checkout.razorpay.com/v1/checkout.js"
