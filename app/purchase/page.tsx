@@ -16,6 +16,15 @@ declare global {
   }
 }
 
+// Helper functions for Android detection
+const isAndroid = () => {
+  return typeof navigator !== 'undefined' && /Android/i.test(navigator.userAgent)
+}
+
+const isTelegramBrowser = () => {
+  return typeof navigator !== 'undefined' && /Telegram/i.test(navigator.userAgent)
+}
+
 export default function PurchasePage() {
   const searchParams = useSearchParams()
 
@@ -66,7 +75,15 @@ export default function PurchasePage() {
     const script = document.createElement("script")
     script.src = "https://checkout.razorpay.com/v1/checkout.js"
     script.onload = () => setRazorpayLoaded(true)
+    script.onerror = () => {
+      setError("Failed to load the payment gateway. Please check your internet connection and try again.")
+    }
     document.body.appendChild(script)
+
+    return () => {
+      // Clean up the script when the component unmounts
+      document.body.removeChild(script)
+    }
   }, [])
 
   // Validation functions
@@ -205,11 +222,86 @@ export default function PurchasePage() {
 
       const rzp = new window.Razorpay({
         ...paymentOptions,
-        // Add handler for payment success
-        handler: (response) => {
+        // Updated handler for Android compatibility
+        handler: (response: any) => {
           console.log("Payment successful:", response)
-          // Redirect to Telegram bot
-          window.location.href = "https://t.me/WearBefore_bot"
+
+          const telegramUrl = "https://t.me/WearBefore_bot"
+
+          if (isAndroid() || isTelegramBrowser()) {
+            // Android/Telegram-specific redirect handling
+            try {
+              // Create a temporary overlay with manual redirect button
+              const overlay = document.createElement('div')
+              overlay.style.cssText = `
+                position: fixed;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 100%;
+                background: rgba(0,0,0,0.9);
+                display: flex;
+                flex-direction: column;
+                justify-content: center;
+                align-items: center;
+                z-index: 10000;
+                color: white;
+                font-family: Arial, sans-serif;
+                text-align: center;
+                padding: 20px;
+              `
+
+              overlay.innerHTML = `
+                <div style="max-width: 400px;">
+                  <h2 style="margin-bottom: 20px; font-size: 24px;">Payment Successful! 🎉</h2>
+                  <p style="margin-bottom: 30px; font-size: 16px; line-height: 1.5;">Your payment has been processed successfully. Tap the button below to continue to the Telegram bot:</p>
+                  <a href="${telegramUrl}"
+                     style="background: #3b82f6; color: white; padding: 15px 30px; text-decoration: none; border-radius: 8px; font-weight: bold; font-size: 18px; display: inline-block;"
+                     onclick="this.closest('div').parentElement.remove()">
+                    Open Telegram Bot
+                  </a>
+                  <p style="margin-top: 20px; font-size: 12px; color: #ccc;">
+                    If the button doesn't work, copy this link: ${telegramUrl}
+                  </p>
+                </div>
+              `
+
+              document.body.appendChild(overlay)
+
+              // Also try automatic redirect as backup
+              setTimeout(() => {
+                try {
+                  window.location.replace(telegramUrl)
+                } catch (e) {
+                  console.log("Automatic redirect failed:", e)
+                }
+              }, 1000)
+
+            } catch (error) {
+              console.log("Android redirect error:", error)
+              // Fallback to simple redirect
+              window.location.replace(telegramUrl)
+            }
+          } else {
+            // Desktop/iOS - use normal redirect with multiple fallbacks
+            try {
+              // Try window.open first
+              const newWindow = window.open(telegramUrl, '_blank')
+
+              // If popup blocked, fall back to location redirect
+              if (!newWindow || newWindow.closed || typeof newWindow.closed == 'undefined') {
+                window.location.replace(telegramUrl)
+              } else {
+                // If window.open worked, also redirect current window after delay
+                setTimeout(() => {
+                  window.location.replace(telegramUrl)
+                }, 1000)
+              }
+            } catch (error) {
+              console.log("Desktop redirect error:", error)
+              window.location.href = telegramUrl
+            }
+          }
         },
       })
 
@@ -542,7 +634,7 @@ export default function PurchasePage() {
               {/* Left Column: Packages */}
               <div>
                 {[5, 50, 100].map((images) => {
-                  const isSelected = totalImages === images && !isCustomSelected
+                  const isSelected = selectedImages === images && !isCustomSelected
                   let price = 0
                   if (images === 5) price = 49
                   else if (images === 50) price = 449
